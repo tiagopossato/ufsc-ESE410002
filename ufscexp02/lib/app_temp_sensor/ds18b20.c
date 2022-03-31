@@ -19,7 +19,6 @@
 #include "ds18b20.h"
 #include "esp_log.h"
 
-
 static const char *TAG = "ds18b20";
 
 // OneWire commands
@@ -68,20 +67,20 @@ void ds18b20_write(char bit)
 	{
 		gpio_set_direction(DS_GPIO, GPIO_MODE_OUTPUT);
 		noInterrupts();
-		gpio_set_level(DS_GPIO, 0);
-		ets_delay_us(6);
-		gpio_set_direction(DS_GPIO, GPIO_MODE_INPUT); // release bus
-		ets_delay_us(64);
+		gpio_set_level(DS_GPIO, 0);					  // Drive bus low
+		ets_delay_us(6);							  // delay A
+		gpio_set_direction(DS_GPIO, GPIO_MODE_INPUT); // Release bus
+		ets_delay_us(64);							  // delay B
 		interrupts();
 	}
 	else
 	{
 		gpio_set_direction(DS_GPIO, GPIO_MODE_OUTPUT);
 		noInterrupts();
-		gpio_set_level(DS_GPIO, 0);
-		ets_delay_us(60);
-		gpio_set_direction(DS_GPIO, GPIO_MODE_INPUT); // release bus
-		ets_delay_us(10);
+		gpio_set_level(DS_GPIO, 0);					  // Drive bus low
+		ets_delay_us(60);							  // delay C
+		gpio_set_direction(DS_GPIO, GPIO_MODE_INPUT); // Release bus
+		ets_delay_us(10);							  // delay D
 		interrupts();
 	}
 }
@@ -92,12 +91,12 @@ unsigned char ds18b20_read(void)
 	unsigned char value = 0;
 	gpio_set_direction(DS_GPIO, GPIO_MODE_OUTPUT);
 	noInterrupts();
-	gpio_set_level(DS_GPIO, 0);
-	ets_delay_us(6);
-	gpio_set_direction(DS_GPIO, GPIO_MODE_INPUT);
-	ets_delay_us(9);
-	value = gpio_get_level(DS_GPIO);
-	ets_delay_us(55);
+	gpio_set_level(DS_GPIO, 0);					  // Drive bus low
+	ets_delay_us(6);							  // delay A
+	gpio_set_direction(DS_GPIO, GPIO_MODE_INPUT); // Release bus
+	ets_delay_us(9);							  // delay E
+	value = gpio_get_level(DS_GPIO);			  // Sample bus to read bit from slave
+	ets_delay_us(55);							  // Delay F
 	interrupts();
 	return (value);
 }
@@ -133,13 +132,14 @@ unsigned char ds18b20_reset(void)
 	unsigned char presence;
 	gpio_set_direction(DS_GPIO, GPIO_MODE_OUTPUT);
 	noInterrupts();
-	gpio_set_level(DS_GPIO, 0);
-	ets_delay_us(480);
-	gpio_set_level(DS_GPIO, 1);
+	// Delay G
+	gpio_set_level(DS_GPIO, 0); // Drive bus low
+	ets_delay_us(480);			// delay H
+	gpio_set_level(DS_GPIO, 1); // Release bus
 	gpio_set_direction(DS_GPIO, GPIO_MODE_INPUT);
-	ets_delay_us(70);
-	presence = (gpio_get_level(DS_GPIO) == 0);
-	ets_delay_us(410);
+	ets_delay_us(70);						   // delay I
+	presence = (gpio_get_level(DS_GPIO) == 0); // Sample bus, 0 = device(s) present, 1 = no device present
+	ets_delay_us(410);						   // Delay J
 	interrupts();
 	return presence;
 }
@@ -349,7 +349,7 @@ float ds18b20_get_temp(void)
 			ds18b20_send_byte(READSCRATCH);
 			temp1 = ds18b20_read_byte();
 			temp2 = ds18b20_read_byte();
-			check=ds18b20_RST_PULSE();
+			check = ds18b20_RST_PULSE();
 			float temp = 0;
 			temp = (float)(temp1 + (temp2 * 256)) / 16;
 			return temp;
